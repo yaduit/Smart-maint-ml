@@ -4,12 +4,19 @@ const Prediction = require('../models/prediction.js')
 
 exports.runPredictions = async (req, res) => {
   try {
+    // Count total unique machines first
+    const totalMachines = await Sensor.distinct('machine_id')
+    console.log('Total unique machines in DB:', totalMachines.length)
+
     //latest sensor reading
     const latestSensors = await Sensor.aggregate([
       { $sort: { timestamp: -1 } },                        // newest first
       { $group: { _id: '$machine_id', doc: { $first: '$$ROOT' } } }, // 1 per machine
-      { $replaceRoot: { newRoot: '$doc' } }               // flatten
+      { $replaceRoot: { newRoot: '$doc' } },
+      { $sort: { machine_id: 1 } },
+      {$limit: 30}             // flatten
     ])
+    console.log('Machines sent to Flask:', latestSensors.map(s => s.machine_id))
 
     if (latestSensors.length === 0) {
       return res.status(400).json({
@@ -26,13 +33,17 @@ exports.runPredictions = async (req, res) => {
       torque:       s.torque,
       tool_wear:    s.tool_wear
     }))
-
+    console.log('Payload being sent to Flask:', JSON.stringify(flaskPayload).slice(0, 200))
     // Calling Flask ML service 
     const flaskRes = await axios.post(
       `${process.env.FLASK_URL}/predict`,
       flaskPayload,
-      { timeout: 10000 }  
+      { timeout: 30000,
+        headers: { 'Content-Type': 'application/json' }
+      },
     )
+    console.log('Flask returned predictions for:', flaskRes.data.map(p => p.machine_id))
+
     const predictions = flaskRes.data
 
     // Save predictions to MongoDB 

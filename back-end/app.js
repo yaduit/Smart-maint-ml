@@ -15,8 +15,8 @@ app.use('/api/predictions', require('./routes/predictions'));
 app.use('/api/alerts', require('./routes/alerts'));
 
 
-app.get('/health',()=>{
-    resizeBy.json({status: 'ok',service: 'smartmaint-api'})
+app.get('/health',(req,res)=>{
+    res.json({status: 'ok',service: 'smartmaint-api'})
 });
 
 module.exports = app
