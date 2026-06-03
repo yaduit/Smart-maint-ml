@@ -1,13 +1,21 @@
 from flask import Flask , request, jsonify
 from flask_cors import CORS
 import joblib
-import numpy as np
+import pandas as pd
 
 app = Flask(__name__)
 CORS(app)
 
 model = joblib.load('./model.pkl')
 print('model loaded and ready')
+
+FEATURE_NAMES = [
+    'Air temperature [K]',
+    'Process temperature [K]',
+    'Rotational speed [rpm]',
+    'Torque [Nm]',
+    'Tool wear [min]'
+]
 
 #Health check
 @app.route('/health', methods=['GET'])
@@ -17,7 +25,7 @@ def health():
 #Prediction endpoint
 @app.route('/predict', methods=['POST'])
 def predict():
-    data = request.json
+    data = request.get_json(force=True, silent=True)
     if not data:
         return jsonify({'error':'no data provided'}), 400
     
@@ -25,15 +33,15 @@ def predict():
 
     for machine in data:
         try:
-            features = np.array([[
+            features_df = pd.DataFrame([[
                 machine['air_temp'],
                 machine['process_temp'],
                 machine['rpm'],
                 machine['torque'],
                 machine['tool_wear']
-            ]])
+            ]],columns=FEATURE_NAMES)
 
-            prob = model.predict_proba(features)[0][1]
+            prob = model.predict_proba(features_df)[0][1]
 
             if prob>0.6:
                 risk = 'High'
