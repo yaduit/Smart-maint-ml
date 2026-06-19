@@ -1,13 +1,15 @@
-from flask import Flask , request, jsonify
+import os
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
 import pandas as pd
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=os.environ.get('CORS_ORIGINS', '*'))
 
-model = joblib.load('./model.pkl')
-print('model loaded and ready')
+MODEL_PATH = os.environ.get('MODEL_PATH', './model.pkl')
+model = joblib.load(MODEL_PATH)
+print(f'model loaded from {MODEL_PATH} and ready')
 
 FEATURE_NAMES = [
     'Air temperature [K]',
@@ -65,6 +67,8 @@ def predict():
 
 
 if __name__ == '__main__':
-    app.run(port = 5001,debug=True)
+    port = int(os.environ.get('PORT', 5001))
+    debug = os.environ.get('FLASK_DEBUG', '0') in ['1', 'true', 'True']
+    app.run(port=port, debug=debug)
 
 
