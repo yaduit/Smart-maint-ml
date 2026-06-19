@@ -72,5 +72,78 @@ npm run dev
 
 ## Project Structure
 
+```
+├── 📁 back-end
+│   ├── 📁 config
+│   │   └── 📄 db.js
+│   ├── 📁 controllers
+│   │   ├── 📄 predictController.js
+│   │   └── 📄 uploadController.js
+│   ├── 📁 models
+│   │   ├── 📄 prediction.js
+│   │   └── 📄 sensor.js
+│   ├── 📁 routes
+│   │   ├── 📄 alerts.js
+│   │   ├── 📄 machines.js
+│   │   ├── 📄 predict.js
+│   │   ├── 📄 predictions.js
+│   │   ├── 📄 sensors.js
+│   │   └── 📄 upload.js
+│   ├── ⚙️ .dockerignore
+│   ├── ⚙️ .env.example
+│   ├── 🐳 Dockerfile
+│   ├── 📄 app.js
+│   ├── ⚙️ package-lock.json
+│   ├── ⚙️ package.json
+│   └── 📄 server.js
+├── 📁 front-end
+│   ├── 📁 public
+│   │   └── ⚙️ .gitkeep
+│   ├── 📁 src
+│   │   ├── 📁 components
+│   │   │   ├── 📄 AlertPanel.jsx
+│   │   │   ├── 📄 Icon.jsx
+│   │   │   ├── 📄 KPIcards.jsx
+│   │   │   ├── 📄 Layout.jsx
+│   │   │   ├── 📄 MachineTable.jsx
+│   │   │   ├── 📄 Navbar.jsx
+│   │   │   ├── 📄 SensorChart.jsx
+│   │   │   ├── 📄 Sidebar.jsx
+│   │   │   └── 📄 UploadPanel.jsx
+│   │   ├── 📁 pages
+│   │   │   ├── 📄 Alerts.jsx
+│   │   │   ├── 📄 Dashboard.jsx
+│   │   │   ├── 📄 History.jsx
+│   │   │   └── 📄 Machines.jsx
+│   │   ├── 📁 services
+│   │   │   └── 📄 api.js
+│   │   ├── 📄 App.jsx
+│   │   ├── 🎨 index.css
+│   │   └── 📄 main.jsx
+│   ├── ⚙️ .dockerignore
+│   ├── ⚙️ .env.example
+│   ├── ⚙️ .gitignore
+│   ├── 🐳 Dockerfile
+│   ├── 📝 README.md
+│   ├── 📄 eslint.config.js
+│   ├── 🌐 index.html
+│   ├── ⚙️ nginx.conf
+│   ├── ⚙️ package-lock.json
+│   ├── ⚙️ package.json
+│   └── 📄 vite.config.js
+├── 📁 ml-service
+│   ├── ⚙️ .dockerignore
+│   ├── 🐳 Dockerfile
+│   ├── 📄 ai4i2020.csv
+│   ├── 🐍 app.py
+│   ├── 📄 model.pkl
+│   ├── 📄 requirements.txt
+│   └── 🐍 train-model.py
+├── ⚙️ .gitignore
+├── 📄 LICENSE
+├── 📝 README.md
+└── ⚙️ docker-compose.yml
+```
+
 ## Author
 Yadu Krishna K
