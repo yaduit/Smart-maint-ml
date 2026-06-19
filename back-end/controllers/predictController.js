@@ -1,31 +1,27 @@
-const axios      = require('axios')
+﻿const axios      = require('axios')
 const Sensor     = require('../models/sensor.js')
 const Prediction = require('../models/prediction.js')
 
+const chunk = (arr, size) =>
+  Array.from({ length: Math.ceil(arr.length / size) },
+    (_, i) => arr.slice(i * size, i * size + size))
+
 exports.runPredictions = async (req, res) => {
   try {
-    // Count total unique machines first
-    const totalMachines = await Sensor.distinct('machine_id')
-    console.log('Total unique machines in DB:', totalMachines.length)
-
-    //latest sensor reading
+    // All unique machines — no limit
     const latestSensors = await Sensor.aggregate([
-      { $sort: { timestamp: -1 } },                        // newest first
-      { $group: { _id: '$machine_id', doc: { $first: '$$ROOT' } } }, // 1 per machine
+      { $sort:        { timestamp: -1 } },
+      { $group:       { _id: '$machine_id', doc: { $first: '$$ROOT' } } },
       { $replaceRoot: { newRoot: '$doc' } },
-      { $sort: { machine_id: 1 } },
-      {$limit: 30}             // flatten
+      { $sort:        { machine_id: 1 } }
     ])
-    console.log('Machines sent to Flask:', latestSensors.map(s => s.machine_id))
 
-    if (latestSensors.length === 0) {
-      return res.status(400).json({
-        error: 'No sensor data found. Please upload a CSV first.'
-      })
+    if (!latestSensors.length) {
+      return res.status(400).json({ error: 'No sensor data. Upload a CSV first.' })
     }
 
-    //Format data for Flask
-    const flaskPayload = latestSensors.map(s => ({
+
+    const payload = latestSensors.map(s => ({
       machine_id:   s.machine_id,
       air_temp:     s.air_temp,
       process_temp: s.process_temp,
@@ -33,21 +29,22 @@ exports.runPredictions = async (req, res) => {
       torque:       s.torque,
       tool_wear:    s.tool_wear
     }))
-    console.log('Payload being sent to Flask:', JSON.stringify(flaskPayload).slice(0, 200))
-    // Calling Flask ML service 
-    const flaskRes = await axios.post(
-      `${process.env.FLASK_URL}/predict`,
-      flaskPayload,
-      { timeout: 30000,
-        headers: { 'Content-Type': 'application/json' }
-      },
-    )
-    console.log('Flask returned predictions for:', flaskRes.data.map(p => p.machine_id))
 
-    const predictions = flaskRes.data
+    // Sequential batches of 100 — prevents Flask timeout
+    const batches     = chunk(payload, 100)
+    const predictions = []
 
-    // Save predictions to MongoDB 
-    await Prediction.deleteMany({})  
+    for (let i = 0; i < batches.length; i++) {
+      const { data } = await axios.post(
+        `${process.env.FLASK_URL}/predict`,
+        JSON.stringify(batches[i]),
+        { timeout: 30000, headers: { 'Content-Type': 'application/json' } }
+      )
+      predictions.push(...data)
+    }
+
+    // Replace all predictions in MongoDB
+    await Prediction.deleteMany({})
     await Prediction.insertMany(
       predictions.map(p => ({
         machine_id:  p.machine_id,
@@ -57,22 +54,23 @@ exports.runPredictions = async (req, res) => {
       }))
     )
 
-    //Build summary and return 
     const summary = {
       total:  predictions.length,
       high:   predictions.filter(p => p.risk_level === 'High').length,
       medium: predictions.filter(p => p.risk_level === 'Medium').length,
-      low:    predictions.filter(p => p.risk_level === 'Low').length
+      low:    predictions.filter(p => p.risk_level === 'Low').length,
     }
 
-    res.json({ success: true, predictions, summary })
+    console.log('Predictions complete:', summary)
+    res.json({ success: true, summary })
 
   } catch (err) {
     if (err.code === 'ECONNREFUSED') {
       return res.status(500).json({
-        error: 'Flask ML service is not running! Start it: cd ml-service && python app.py'
+        error: 'Flask is not running. Start it: cd ml-service && python app.py'
       })
     }
+    console.error('Predict error:', err.message)
     res.status(500).json({ error: err.message })
   }
 }
