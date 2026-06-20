@@ -73,7 +73,6 @@ npm run dev
 ## Project Structure
 
 
-
 ```
 ├── 📁 back-end
 │   ├── 📁 config
@@ -148,4 +147,4 @@ npm run dev
 ```
 
 ## Author
-Yadu Krishna K
+Yadu Krishna K - Full Stack Developer
