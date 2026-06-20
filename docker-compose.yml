@@ -1,0 +1,31 @@
+services:
+  ml-service:
+    build: ./ml-service
+    ports:
+      - "5001:5001"
+    restart: unless-stopped
+
+  backend:
+    build: ./back-end
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - MONGO_URI=${MONGO_URI}
+      - FLASK_URL=http://ml-service:5001
+      - CORS_ORIGIN=http://localhost:5173
+      - NODE_ENV=production
+    depends_on:
+      - ml-service
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./front-end
+      args:
+        VITE_API_BASE_URL: http://localhost:3001
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
