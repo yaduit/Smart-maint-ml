@@ -1,5 +1,5 @@
 ﻿const axios      = require('axios')
-const sensor     = require('../models/sensor.js')
+const Sensor     = require('../models/sensor.js')
 const Prediction = require('../models/prediction.js')
 
 const chunk = (arr, size) =>
@@ -9,19 +9,19 @@ const chunk = (arr, size) =>
 exports.runPredictions = async (req, res) => {
   try {
     // All unique machines — no limit
-    const latestsensors = await sensor.aggregate([
+    const latestSensors = await Sensor.aggregate([
       { $sort:        { timestamp: -1 } },
       { $group:       { _id: '$machine_id', doc: { $first: '$$ROOT' } } },
       { $replaceRoot: { newRoot: '$doc' } },
       { $sort:        { machine_id: 1 } }
     ])
 
-    if (!latestsensors.length) {
-      return res.status(400).json({ error: 'No sensor data. Upload a CSV first.' })
+    if (!latestSensors.length) {
+      return res.status(400).json({ error: 'No Sensor data. Upload a CSV first.' })
     }
 
 
-    const payload = latestsensors.map(s => ({
+    const payload = latestSensors.map(s => ({
       machine_id:   s.machine_id,
       air_temp:     s.air_temp,
       process_temp: s.process_temp,
