@@ -11,7 +11,7 @@ const UploadPanel = ({ onDataRefresh }) => {
   const [error,     setError]     = useState(null)
   const fileRef = useRef()
 
-  const step = !file ? 0 : 1
+  const step = result ? 2 : (!file ? 0 : 1)
 
   const handleUpload = async () => {
     if (!file) return
